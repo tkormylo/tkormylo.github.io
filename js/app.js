@@ -1,0 +1,185 @@
+// TSK: Generate random number
+var GetRandomNumber = function(min, max) {
+    var randomNumber = Math.floor(Math.random()*(max-min+1)+min);
+    return randomNumber;
+};
+
+// TSK: ScoreBoard object base class
+var ScoreBoard = function(_score) {
+    score = _score;
+};
+
+// TSK: Render the score to the canvas
+ScoreBoard.prototype.render = function() {
+    ctx.clearRect(10, 600, 100, -14);
+    ctx.font="18px Arial";
+    ctx.fillText("Score: " + score, 10, 600);
+};
+
+// TSK: PickupItem object base class
+var PickupItem = function(_pickupItemImg, _pickupItemX, _pickupItemY) {
+    this.image = _pickupItemImg;
+    this.x = _pickupItemX;
+    this.y = _pickupItemY;
+};
+
+// TSK: Render pickup item(s) (such as a gem).
+PickupItem.prototype.render = function() {
+    ctx.drawImage(Resources.get(this.image), this.x, this.y);
+};
+
+// TSK: Gem object class
+var Gem = function (_gemImage, _gemXLocation, _gemYLocation) {
+    PickupItem.call(this, _gemImage, _gemXLocation, _gemYLocation);
+};
+
+// TSK: Update Gem prototype and constructor
+Gem.prototype = Object.create(PickupItem.prototype);
+Gem.prototype.constructor = Gem;
+
+// TSK: Method to check if a Gem is touching a player
+Gem.prototype.checkIfTouchingPlayer = function(player, gem) {
+    if (player.x === gem.x && player.y === gem.y) {
+      score = score + 100;
+      gem.image = gemImageArray[GetRandomNumber(0, (gemImageArray.length - 1))];
+      gem.x = gemXLocArray[GetRandomNumber(0, (gemXLocArray.length - 1))];
+      gem.y = gemYLocArray[GetRandomNumber(0, (gemYLocArray.length - 1))];
+    }
+};
+
+// Entity object base class
+var Entity = function(spriteImg, x, y) {
+    this.sprite = spriteImg;
+    this.x = x;
+    this.y = y;
+};
+
+// Entity objects base class
+Entity.prototype.render = function() {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
+// Enemies our player must avoid
+var Enemy = function(_sprite, _speed, _x, _y) {
+    // Variables applied to each of our instances go here,
+    // we've provided one for you to get started
+
+    // The image/sprite for our enemies, this uses
+    // a helper we've provided to easily load images
+    this.sprite = _sprite;
+    this.speed = _speed;
+    Entity.call(this, _sprite, _x, _y);
+};
+// TSK: Update Enemy object prototype and constructor
+Enemy.prototype = Object.create(Entity.prototype);
+Enemy.prototype.constructor = Enemy;
+
+// Update the enemy's position, required method for game
+// Parameter: dt, a time delta between ticks
+Enemy.prototype.update = function(dt) {
+    // You should multiply any movement by the dt parameter
+    // which will ensure the game runs at the same speed for
+    // all computers.
+
+// TSK: Check enemy position and if off right edge of canvas, randomize
+// Y position and speed and reset back to start X position.
+// If not off screen, continue to move across screen by
+// current movement speed.
+    if (this.x > 550) {
+      this.x = -150;
+      this.y = bugRowArray[GetRandomNumber(0, (bugRowArray.length - 1))];
+      this.speed = GetRandomNumber(100, 200);
+    } else {
+      this.x = this.x + (this.speed * dt);
+    }
+};
+
+// TSK: Method to check if any of the enemies are touching a player
+Enemy.prototype.checkIfTouchingPlayer = function(enemyX, enemyY, playerX, playerY, player) {
+    if (enemyY === playerY && (enemyX >= (playerX -40) && (enemyX <= (playerX + 40)))) {
+      player.x = 200;
+      player.y = 380;
+      score = 0;
+    }
+};
+
+// Now write your own player class
+// This class requires an update(), render() and
+// a handleInput() method.
+var Player = function(sprite, x, y) {
+    Entity.call(this, sprite, x, y);
+    this.sprite = sprite;
+};
+
+// TSK: Update Player object prototype and constructor
+Player.prototype = Object.create(Entity.prototype);
+Player.prototype.constructor = Player;
+
+// TSK: Method to update player properties and information
+Player.prototype.update = function() {
+    // TSK: If player is in the water (player.y = -20) then reset player (death).
+    if (player.y === -20) {
+      player.x = 200;
+      player.y = 380;
+    }
+};
+
+//  TSK: Take the key input and move the player
+//  according to the direction pressed.
+//  If the player position does not allow that move
+//  do not move the player.
+Player.prototype.handleInput = function(keyPressed) {
+    if (keyPressed === 'left' && player.x > 50 && player.x <= 400) {
+      player.x = player.x - 100;
+    }
+    else if (keyPressed === 'right' && player.x < 400) {
+      player.x = player.x + 100;
+    }
+    else if (keyPressed === 'up' && player.y > -20) {
+      player.y = player.y - 80;
+    }
+    else if (keyPressed === 'down' && player.y < 380) {
+      player.y = player.y + 80;
+    }
+};
+
+// TSK: Enemy, Gem, and Sprite information arrays. These will be used to assist with assigning
+// random properties to the objects when they are created.
+var bugRowArray = [60, 140, 220];
+var gemXLocArray = [0, 100, 200, 300, 400];
+var gemYLocArray = [60, 140, 220];
+var gemImageArray = ['images/Gem Blue.png', 'images/Gem Green.png', 'images/Gem Orange.png'];
+var spriteImgArray = ['images/char-boy.png', 'images/char-cat-girl.png', 'images/char-horn-girl.png', 'images/char-pink-girl.png', 'images/char-princess-girl.png'];
+
+// Now instantiate your objects.
+// Place all enemy objects in an array called allEnemies
+// Place the player object in a variable called player
+var enemy1 = new Enemy('images/enemy-bug.png', GetRandomNumber(100, 200), -150, bugRowArray[GetRandomNumber(0, (bugRowArray.length - 1))]);
+var enemy2 = new Enemy('images/enemy-bug.png', GetRandomNumber(100, 200), -150, bugRowArray[GetRandomNumber(0, (bugRowArray.length - 1))]);
+var enemy3 = new Enemy('images/enemy-bug.png', GetRandomNumber(100, 200), -150, bugRowArray[GetRandomNumber(0, (bugRowArray.length - 1))]);
+var enemy4 = new Enemy('images/enemy-bug.png', GetRandomNumber(100, 200), -150, bugRowArray[GetRandomNumber(0, (bugRowArray.length - 1))]);
+var enemy5 = new Enemy('images/enemy-bug.png', GetRandomNumber(100, 200), -150, bugRowArray[GetRandomNumber(0, (bugRowArray.length - 1))]);
+var allEnemies = [enemy1, enemy2, enemy3, enemy4, enemy5];
+
+// TSK: Create player object
+var player = new Player(spriteImgArray[GetRandomNumber(0, (spriteImgArray.length - 1))], 200, 380);
+
+// TSK: Create gem object(s)
+var gem1 = new Gem(gemImageArray[GetRandomNumber(0, (gemImageArray.length - 1))], gemXLocArray[GetRandomNumber(0, (gemXLocArray.length - 1))], gemYLocArray[GetRandomNumber(0, (gemYLocArray.length - 1))]);
+var allPickupItems = [gem1];
+
+// Create scoreBoard object
+var scoreBoard = new ScoreBoard(0);
+
+// This listens for key presses and sends the keys to your
+// Player.handleInput() method. You don't need to modify this.
+document.addEventListener('keyup', function(e) {
+    var allowedKeys = {
+        37: 'left',
+        38: 'up',
+        39: 'right',
+        40: 'down'
+    };
+
+    player.handleInput(allowedKeys[e.keyCode]);
+});
